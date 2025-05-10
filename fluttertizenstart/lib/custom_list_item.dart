@@ -1,6 +1,8 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:logger/logger.dart';
 
 class CustomListItem extends StatelessWidget {
   final String title;
@@ -14,6 +16,8 @@ class CustomListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final FocusNode focusNode = FocusNode();
+    final logger = Logger();
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Padding(
@@ -48,27 +52,31 @@ class CustomListItem extends StatelessWidget {
                 showDialog(
                   context: context,
                   barrierDismissible: true,
-                  builder: (context) => PopScope(
-                    onPopInvokedWithResult: (didPop, result) {
-                      if (didPop) {
-                        log('路由已弹出，返回结果: $result');
-                      } else {
-                        log('路由弹出被拦截');
-                      }
-                    },
-                    child: AlertDialog(
-                      title: Text(title),
-                      content: SingleChildScrollView(
-                        child: Text(content),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('关闭'),
+                  builder: (context) => Focus(
+                      focusNode: focusNode, 
+                      autofocus: true,
+                      onKeyEvent: (focusNode, event) {
+                          logger.i('${event.logicalKey}');
+                          if (event.logicalKey == LogicalKeyboardKey.escape) {
+                            Navigator.of(context).pop();
+                            return KeyEventResult.handled;
+                          }
+                          return KeyEventResult.ignored;
+                      },
+                      child: 
+                        AlertDialog(
+                          title: Text(title),
+                          content: SingleChildScrollView(
+                            child: Text(content),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('关闭'),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
+                        ),
                 );
               },
             ),
